@@ -1,0 +1,45 @@
+pipeline {
+agent any
+environment{
+REGISTRY = "localhost:5000"
+IMAGE_NAME = "student-demo-app"
+}
+stages {
+stage('1.CHECKOUT CODE'){
+steps {
+checkout scm
+}
+}
+stage('2. Application  Build & Test"){
+steps {
+echo "verifying python syntax..."
+bat 'python -m py_compile app.py'
+}
+}
+stage('3. build & tag docker image'){
+steps{
+echo "build image tagged with build #
+${env.BUILD_NUMBER} AND
+latest..."
+       bat "docker build -t ${REGISTRY}/
+       ${REGISTRY}/${IMAGE_NAME}:latest ."
+}
+}
+stage('4. push image to registry"){
+steps{
+  echo "Pushing versioned and latest images to local registry..."
+
+        bat "docker push ${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}"
+
+        bat "docker push ${REGISTRY}/${IMAGE_NAME}:latest"
+    }
+}
+    }
+    post {
+        success {
+            echo "Pipeline succeeded! Image 
+${REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} is available locally and in the 
+registry."
+        }
+    }
+}
